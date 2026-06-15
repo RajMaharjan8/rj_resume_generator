@@ -34,6 +34,7 @@ import {
   PlusIcon,
   TrashIcon,
 } from '../../components/atoms/icons'
+import Footer from '../../components/atoms/Footer'
 import type { ResumeData } from '../../types'
 
 interface Props {
@@ -136,6 +137,8 @@ export default function CanvasBuilder({ data, onChange, resume }: Props) {
       {footerOpen && (
         <FooterEditor data={data} setSettings={setSettings} onClose={() => setFooterOpen(false)} />
       )}
+
+      <Footer />
     </div>
   )
 }

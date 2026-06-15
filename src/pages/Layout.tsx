@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useTheme } from '../useTheme'
 import { useWorkspace } from '../WorkspaceContext'
@@ -27,7 +27,6 @@ export default function Layout() {
   } = ws
   const { modal, setModal, editingId, setEditingId } = useBlockModals()
   const { user } = useAuth()
-  const navigate = useNavigate()
   const location = useLocation()
   const isPortfolio = location.pathname.startsWith('/portfolio')
 
@@ -47,7 +46,6 @@ export default function Layout() {
         saveState={isPortfolio ? portfolio.saveState : resume.saveState}
         saveError={isPortfolio ? portfolio.saveError ?? null : resume.saveError ?? null}
         isPortfolio={isPortfolio}
-        onSetView={(v) => navigate(v === 'portfolio' ? '/portfolio' : '/')}
         downloadLabel={isPortfolio ? 'Download site' : 'Download PDF'}
         onDownload={download}
         onReset={() => {
@@ -143,7 +141,6 @@ function TopBar({
   saveState,
   saveError,
   isPortfolio,
-  onSetView,
   downloadLabel,
   onDownload,
   onReset,
@@ -152,7 +149,6 @@ function TopBar({
   saveState: string
   saveError?: string | null
   isPortfolio: boolean
-  onSetView: (v: 'resume' | 'portfolio') => void
   downloadLabel: string
   onDownload: () => void
   onReset: () => void
@@ -166,24 +162,11 @@ function TopBar({
   return (
     <header className="topbar">
       <div className="brand">
-        <FileIcon className="logo" />
-        <span className="brand-name">RJResume</span>
-        <div className="seg view-switch">
-          <button
-            type="button"
-            className={`seg-btn ${!isPortfolio ? 'active' : ''}`}
-            onClick={() => onSetView('resume')}
-          >
-            Resume
-          </button>
-          <button
-            type="button"
-            className={`seg-btn ${isPortfolio ? 'active' : ''}`}
-            onClick={() => onSetView('portfolio')}
-          >
-            Portfolio
-          </button>
-        </div>
+        <Link to="/" className="brand-link" title="Back to home">
+          <FileIcon className="logo" />
+          <span className="brand-name">RJResume</span>
+        </Link>
+        <span className="brand-tool">{isPortfolio ? 'Portfolio' : 'Resume'}</span>
         {user && (
           <button
             type="button"

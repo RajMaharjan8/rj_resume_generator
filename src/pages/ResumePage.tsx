@@ -3,6 +3,7 @@ import { useWorkspace } from '../WorkspaceContext'
 import Customizer from '../components/molecules/Customizer'
 import Editor from '../components/organisms/Editor'
 import ResumePreview from '../components/organisms/ResumePreview'
+import Footer from '../components/atoms/Footer'
 
 export default function ResumePage() {
   const { resume, insertFromLibrary } = useWorkspace()
@@ -25,6 +26,7 @@ export default function ResumePage() {
         <div className={`pane left ${tab === 'edit' ? '' : 'hide-mobile'}`}>
           <Customizer settings={settings} onChange={setSettings} />
           <Editor data={data} onChange={setData} onInsertFromLibrary={insertFromLibrary} />
+          <Footer />
         </div>
         <div className={`pane right ${tab === 'preview' ? '' : 'hide-mobile'}`}>
           <ResumePreview ref={previewRef} data={data} settings={settings} />

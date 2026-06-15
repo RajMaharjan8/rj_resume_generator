@@ -184,6 +184,24 @@ export function MenuIcon(p: IconProps) {
   )
 }
 
+export function HeartIcon(p: IconProps) {
+  return (
+    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor" className={p.className} aria-hidden="true">
+      <path d="M12 21s-6.7-4.35-9.33-8.07C.9 10.27 1.5 6.9 4.1 5.6c1.95-.98 4.04-.3 5.4 1.27L12 9.5l2.5-2.63c1.36-1.57 3.45-2.25 5.4-1.27 2.6 1.3 3.2 4.67 1.43 7.33C18.7 16.65 12 21 12 21Z" />
+    </svg>
+  )
+}
+
+export function CoffeeIcon(p: IconProps) {
+  return (
+    <svg {...base} className={p.className} aria-hidden="true">
+      <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+      <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8Z" />
+      <path d="M6 2v2M10 2v2M14 2v2" />
+    </svg>
+  )
+}
+
 export function BlocksIcon(p: IconProps) {
   return (
     <svg {...base} className={p.className} aria-hidden="true">
