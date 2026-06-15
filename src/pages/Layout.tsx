@@ -194,9 +194,11 @@ function TopBar({
         )}
 
         <div className="topbar-inline">
-          <button className="btn ghost" onClick={onOpenBlocks}>
-            <BlocksIcon /> {isPortfolio ? 'My web blocks' : 'My blocks'}
-          </button>
+          {!isPortfolio && (
+            <button className="btn ghost" onClick={onOpenBlocks}>
+              <BlocksIcon /> My blocks
+            </button>
+          )}
           <button className="btn ghost icon-only" onClick={toggle} title={themeLabel} aria-label="Toggle theme">
             {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
           </button>
@@ -233,9 +235,11 @@ function TopBar({
             <>
               <div className="menu-backdrop" onClick={() => setMenuOpen(false)} />
               <div className="menu-pop">
-                <button className="menu-row" onClick={() => { onOpenBlocks(); setMenuOpen(false) }}>
-                  <BlocksIcon /> {isPortfolio ? 'My web blocks' : 'My blocks'}
-                </button>
+                {!isPortfolio && (
+                  <button className="menu-row" onClick={() => { onOpenBlocks(); setMenuOpen(false) }}>
+                    <BlocksIcon /> My blocks
+                  </button>
+                )}
                 <button className="menu-row" onClick={() => { toggle(); setMenuOpen(false) }}>
                   {theme === 'dark' ? <SunIcon /> : <MoonIcon />} {themeLabel}
                 </button>
