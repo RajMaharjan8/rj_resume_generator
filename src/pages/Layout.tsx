@@ -185,9 +185,13 @@ function TopBar({
       </div>
 
       <div className="topbar-actions">
-        <button className="btn primary" onClick={onDownload}>
-          <DownloadIcon /> <span className="hide-xs">{downloadLabel}</span>
-        </button>
+        {/* Portfolio download depends on the user's saved account, so hide it
+            until they sign in. Resume PDF works offline and stays available. */}
+        {(!isPortfolio || user) && (
+          <button className="btn primary" onClick={onDownload}>
+            <DownloadIcon /> <span className="hide-xs">{downloadLabel}</span>
+          </button>
+        )}
 
         <div className="topbar-inline">
           <button className="btn ghost" onClick={onOpenBlocks}>
