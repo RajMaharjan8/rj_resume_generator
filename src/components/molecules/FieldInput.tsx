@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   blankRow,
   type FieldDef,
@@ -6,7 +7,7 @@ import {
   type RepeaterRow,
 } from '../../types'
 import { useDragList } from '../../useDragList'
-import { GripIcon, ImageIcon, PlusIcon, TrashIcon } from '../atoms/icons'
+import { ChevronIcon, GripIcon, ImageIcon, PlusIcon, TrashIcon } from '../atoms/icons'
 import { compressImage, validateImage, ACCEPT_ATTR, MAX_IMAGE_LABEL } from '../../lib/photo'
 import RichText from './RichText'
 
@@ -17,6 +18,8 @@ interface Props {
   // When provided, the field label is click-to-rename and a hover delete shows.
   onRename?: (label: string) => void
   onDelete?: () => void
+  // For repeater fields: rename one of the row sub-field labels by id.
+  onRenameSub?: (subFieldId: string, label: string) => void
   // For image fields: current display meta + setter (size/shape).
   imageMeta?: ImageMeta
   onImageMeta?: (meta: ImageMeta) => void
@@ -65,6 +68,7 @@ export default function FieldInput({
   onChange,
   onRename,
   onDelete,
+  onRenameSub,
   imageMeta,
   onImageMeta,
   hideImageShape,
@@ -205,7 +209,12 @@ export default function FieldInput({
       return (
         <div className="field">
           {labelEl()}
-          <RepeaterBody field={field} rows={(value as RepeaterRow[]) ?? []} onChange={onChange} />
+          <RepeaterBody
+            field={field}
+            rows={(value as RepeaterRow[]) ?? []}
+            onChange={onChange}
+            onRenameSub={onRenameSub}
+          />
         </div>
       )
 
@@ -309,13 +318,23 @@ function RepeaterBody({
   field,
   rows,
   onChange,
+  onRenameSub,
 }: {
   field: FieldDef
   rows: RepeaterRow[]
   onChange: (rows: RepeaterRow[]) => void
+  onRenameSub?: (subFieldId: string, label: string) => void
 }) {
   const sub = field.fields ?? []
   const drag = useDragList(rows, onChange)
+  // Collapsed entries, tracked by row id so it survives reordering.
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+  const toggle = (id: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
 
   const addRow = () => onChange([...rows, blankRow(sub)])
   const removeRow = (i: number) => onChange(rows.filter((_, j) => j !== i))
@@ -324,31 +343,54 @@ function RepeaterBody({
 
   return (
     <div className="repeater">
-      {rows.map((row, i) => (
-        <div key={(row.__id as string) ?? i} className="rep-row" {...drag.rowProps(i)}>
-          <div className="rep-row-bar">
-            <span className="drag-handle small" title="Drag to reorder" {...drag.handleProps(i)}>
-              <GripIcon />
-            </span>
-            <button
-              type="button"
-              className="icon-btn danger"
-              title="Remove entry"
-              onClick={() => removeRow(i)}
-            >
-              <TrashIcon />
-            </button>
+      {rows.map((row, i) => {
+        const rowId = (row.__id as string) ?? String(i)
+        const isCollapsed = collapsed.has(rowId)
+        // Summary shown when collapsed: the first non-empty text sub-field.
+        const summary =
+          sub.map((sf) => row[sf.id]).find((v) => typeof v === 'string' && v.trim()) || 'Empty entry'
+        return (
+          <div key={rowId} className={`rep-row ${isCollapsed ? 'collapsed' : ''}`} {...drag.rowProps(i)}>
+            <div className="rep-row-bar">
+              <span className="drag-handle small" title="Drag to reorder" {...drag.handleProps(i)}>
+                <GripIcon />
+              </span>
+              <button
+                type="button"
+                className={`collapse-btn small ${isCollapsed ? 'rot' : ''}`}
+                onClick={() => toggle(rowId)}
+                aria-label={isCollapsed ? 'Expand entry' : 'Collapse entry'}
+                title={isCollapsed ? 'Expand' : 'Collapse'}
+              >
+                <ChevronIcon />
+              </button>
+              {isCollapsed && <span className="rep-row-summary">{summary as string}</span>}
+              <button
+                type="button"
+                className="icon-btn danger rep-row-del"
+                title="Remove entry"
+                onClick={() => removeRow(i)}
+              >
+                <TrashIcon />
+              </button>
+            </div>
+            {!isCollapsed &&
+              sub.map((sf) => (
+                <FieldInput
+                  key={sf.id}
+                  field={sf}
+                  value={row[sf.id] ?? (sf.type === 'tags' ? [] : '')}
+                  onChange={(v) => updateRow(i, sf.id, v as string | string[])}
+                  // Sub-field labels are the shared row schema, so only let the
+                  // first row's labels be renamed (avoids one editable copy per row).
+                  onRename={
+                    i === 0 && onRenameSub ? (label) => onRenameSub(sf.id, label) : undefined
+                  }
+                />
+              ))}
           </div>
-          {sub.map((sf) => (
-            <FieldInput
-              key={sf.id}
-              field={sf}
-              value={row[sf.id] ?? (sf.type === 'tags' ? [] : '')}
-              onChange={(v) => updateRow(i, sf.id, v as string | string[])}
-            />
-          ))}
-        </div>
-      ))}
+        )
+      })}
       <button type="button" className="add-entry-btn" onClick={addRow}>
         <PlusIcon /> Add entry
       </button>

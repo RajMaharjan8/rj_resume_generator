@@ -6,7 +6,7 @@ import ResumePreview from '../components/organisms/ResumePreview'
 import Footer from '../components/atoms/Footer'
 
 export default function ResumePage() {
-  const { resume, insertFromLibrary } = useWorkspace()
+  const { resume, insertFromLibrary, insertableBlocks } = useWorkspace()
   const { data, setData, settings, setSettings } = resume
   const previewRef = useRef<HTMLDivElement>(null)
   const [tab, setTab] = useState<'edit' | 'preview'>('edit')
@@ -25,7 +25,12 @@ export default function ResumePage() {
       <main className="layout">
         <div className={`pane left ${tab === 'edit' ? '' : 'hide-mobile'}`}>
           <Customizer settings={settings} onChange={setSettings} />
-          <Editor data={data} onChange={setData} onInsertFromLibrary={insertFromLibrary} />
+          <Editor
+            data={data}
+            onChange={setData}
+            onInsertFromLibrary={insertFromLibrary}
+            insertableBlocks={insertableBlocks}
+          />
           <Footer />
         </div>
         <div className={`pane right ${tab === 'preview' ? '' : 'hide-mobile'}`}>

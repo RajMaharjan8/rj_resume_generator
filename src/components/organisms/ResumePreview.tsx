@@ -76,8 +76,15 @@ const ResumePreview = forwardRef<HTMLDivElement, Props>(({ data, settings }, ref
     return () => ro.disconnect()
   }, [data, settings])
 
-  const renderUnit = (u: Unit) =>
-    u === 'header' ? <Header data={data} /> : <BlockView block={data.blocks[u]} />
+  const renderUnit = (u: Unit) => {
+    if (u === 'header') return <Header data={data} />
+    // `pages` holds block indices captured at the last measure. Right after a
+    // block is deleted, data.blocks has already shrunk but pages hasn't been
+    // recomputed yet, so an index can be stale/out of range. Skip it — the
+    // layout effect re-measures on the next frame.
+    const block = data.blocks[u]
+    return block ? <BlockView block={block} /> : null
+  }
 
   return (
     <div className="page-scroll">
@@ -169,7 +176,8 @@ function contactHref(type: string, value: string): string {
   return `https://${v}`
 }
 
-function BlockView({ block }: { block: Block }) {
+function BlockView({ block }: { block: Block | undefined }) {
+  if (!block) return null
   // Hide a block entirely if it has no visible content.
   const hasContent = block.fields.some((f) => fieldHasValue(f, block.values[f.id]))
   if (!hasContent) return null

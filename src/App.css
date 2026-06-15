@@ -868,7 +868,29 @@ body {
 .rep-row-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
+}
+/* Push the delete button to the far right; summary fills the middle. */
+.rep-row-del {
+  margin-left: auto;
+}
+.rep-row-summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-text);
+}
+.collapse-btn.small {
+  width: 22px;
+  height: 22px;
+}
+/* Collapsed entry: tighten the padding since only the bar shows. */
+.rep-row.collapsed {
+  padding-bottom: 10px;
 }
 .contact-row {
   display: grid;

@@ -226,6 +226,24 @@ export function buildSample(): ResumeData {
   }
 }
 
+// A single "Default block" offered in the "Add section" picker out of the box,
+// so a user can add a ready-made section (bold title · title · date +
+// description) without building one from scratch. Labels are generic and
+// unlocked so the block can be renamed and repurposed for any content.
+export function defaultBlockLibrary(): Block[] {
+  const row = [f.text('Bold Title'), f.text('Title'), f.text('Date'), f.textarea('Description')]
+  const field = f.repeater('Entries', row)
+  return [
+    {
+      id: newId(),
+      title: 'Default block',
+      builtin: false,
+      fields: [field],
+      values: { [field.id]: blankValue(field) },
+    },
+  ]
+}
+
 // Build a custom block from a title and a set of field definitions, initializing
 // each field to its blank value. Used by the "Create block" modal.
 export function blockFromFields(title: string, fields: FieldDef[]): Block {

@@ -21,6 +21,25 @@ export default function BlockEditor({ block, onChange, onRemove, dragHandleProps
   const setImageMeta = (fieldId: string, meta: ImageMeta) =>
     onChange({ ...block, imageMeta: { ...block.imageMeta, [fieldId]: meta } })
 
+  // Rename a field's label. Allowed on custom (non-builtin) blocks so a default
+  // block can be repurposed for any content.
+  const renameField = (fieldId: string, label: string) =>
+    onChange({
+      ...block,
+      fields: block.fields.map((f) => (f.id === fieldId ? { ...f, label } : f)),
+    })
+
+  // Rename a repeater sub-field label (the shared row schema).
+  const renameSubField = (fieldId: string, subFieldId: string, label: string) =>
+    onChange({
+      ...block,
+      fields: block.fields.map((f) =>
+        f.id === fieldId
+          ? { ...f, fields: f.fields?.map((sf) => (sf.id === subFieldId ? { ...sf, label } : sf)) }
+          : f,
+      ),
+    })
+
   return (
     <section className={`ed-section block ${collapsed ? 'collapsed' : ''}`}>
       <div className="block-head">
@@ -38,7 +57,18 @@ export default function BlockEditor({ block, onChange, onRemove, dragHandleProps
           <ChevronIcon />
         </button>
 
-        <h3 className="block-title">{block.title}</h3>
+        {block.builtin ? (
+          <h3 className="block-title">{block.title}</h3>
+        ) : (
+          <input
+            className="block-title-input"
+            value={block.title}
+            placeholder="Section title"
+            aria-label="Section title"
+            title="Click to rename this section"
+            onChange={(e) => onChange({ ...block, title: e.target.value })}
+          />
+        )}
 
         {block.builtin && <span className="badge">built-in</span>}
         {onRemove && !block.builtin && (
@@ -56,6 +86,10 @@ export default function BlockEditor({ block, onChange, onRemove, dragHandleProps
               field={field}
               value={block.values[field.id] ?? blankValue(field)}
               onChange={(v) => setValue(field.id, v)}
+              onRename={block.builtin ? undefined : (label) => renameField(field.id, label)}
+              onRenameSub={
+                block.builtin ? undefined : (subId, label) => renameSubField(field.id, subId, label)
+              }
               imageMeta={block.imageMeta?.[field.id]}
               onImageMeta={(meta) => setImageMeta(field.id, meta)}
             />

@@ -10,9 +10,11 @@ interface Props {
   data: ResumeData
   onChange: (data: ResumeData) => void
   onInsertFromLibrary?: (templateId: string) => void
+  // Blocks offered in the "Add section" picker: built-in defaults + saved blocks.
+  insertableBlocks?: Block[]
 }
 
-export default function Editor({ data, onChange, onInsertFromLibrary }: Props) {
+export default function Editor({ data, onChange, onInsertFromLibrary, insertableBlocks }: Props) {
   const blockDrag = useDragList(data.blocks, (blocks) => onChange({ ...data, blocks }))
 
   const updateBlock = (b: Block) =>
@@ -36,7 +38,7 @@ export default function Editor({ data, onChange, onInsertFromLibrary }: Props) {
       ))}
 
       <AddSection
-        library={data.blockLibrary ?? []}
+        library={insertableBlocks ?? data.blockLibrary ?? []}
         onInsert={(id) => onInsertFromLibrary?.(id)}
       />
     </div>

@@ -1,9 +1,9 @@
-import { createContext, useContext, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { useAuth } from './auth/AuthContext'
 import { useResume } from './useResume'
 import { usePortfolio } from './portfolio/usePortfolio'
 import { cloneWebBlock, type BlockStyle } from './portfolio/types'
-import { cloneBlock, resyncBlock, type Block } from './types'
+import { cloneBlock, defaultBlockLibrary, resyncBlock, type Block } from './types'
 
 // Shared app state so it survives navigation between routes (resume ↔ portfolio).
 function useWorkspaceState() {
@@ -11,7 +11,19 @@ function useWorkspaceState() {
   const resume = useResume(user)
   const portfolio = usePortfolio(user, resume.data)
 
+  // The user's own saved blocks (custom blocks require sign-in). Drives the
+  // "My blocks" manager and all persistence — defaults are NOT part of this.
   const library = resume.data.blockLibrary ?? []
+
+  // Always-available starter templates (e.g. an Experience block). Memoized so
+  // their ids stay stable across renders, since the picker and the insert
+  // lookup must reference the same objects.
+  const defaults = useMemo(() => defaultBlockLibrary(), [])
+
+  // What the "Add section" picker offers: the built-in defaults first, then the
+  // user's saved custom blocks. So a default block always shows, even when
+  // custom blocks exist.
+  const insertableBlocks = [...defaults, ...library]
 
   const createBlock = (block: Block) =>
     resume.setData({ ...resume.data, blockLibrary: [...library, block] })
@@ -24,7 +36,7 @@ function useWorkspaceState() {
     })
 
   const insertFromLibrary = (templateId: string) => {
-    const tpl = library.find((b) => b.id === templateId)
+    const tpl = insertableBlocks.find((b) => b.id === templateId)
     if (!tpl) return
     resume.setData({ ...resume.data, blocks: [...resume.data.blocks, cloneBlock(tpl)] })
   }
@@ -83,6 +95,7 @@ function useWorkspaceState() {
     resume,
     portfolio,
     library,
+    insertableBlocks,
     createBlock,
     saveEditedBlock,
     insertFromLibrary,
