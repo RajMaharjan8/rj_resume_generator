@@ -1,6 +1,8 @@
 import {
   ACCENT_PRESETS,
   FONT_OPTIONS,
+  RESUME_PRESETS,
+  type ResumePreset,
   type ResumeSettings,
   type TemplateId,
 } from '../../types'
@@ -8,20 +10,55 @@ import {
 interface Props {
   settings: ResumeSettings
   onChange: (s: ResumeSettings) => void
+  // Apply a starter preset: replaces the resume content and its suggested look.
+  onPreset?: (preset: ResumePreset) => void
 }
 
 const TEMPLATES: { id: TemplateId; label: string }[] = [
   { id: 'modern', label: 'Modern' },
   { id: 'classic', label: 'Classic' },
   { id: 'compact', label: 'Compact' },
+  { id: 'sidebar', label: 'Sidebar' },
+  { id: 'minimal', label: 'Minimal' },
+  { id: 'elegant', label: 'Elegant' },
 ]
 
-export default function Customizer({ settings, onChange }: Props) {
+export default function Customizer({ settings, onChange, onPreset }: Props) {
   const set = <K extends keyof ResumeSettings>(key: K, value: ResumeSettings[K]) =>
     onChange({ ...settings, [key]: value })
 
   return (
     <div className="customizer">
+      {onPreset && (
+        <div className="cz-group cz-group-wide">
+          <span className="cz-label">Start from</span>
+          <select
+            className="select"
+            value=""
+            onChange={(e) => {
+              const preset = RESUME_PRESETS.find((p) => p.id === e.target.value)
+              if (
+                preset &&
+                window.confirm(
+                  `Replace the current resume with the "${preset.label}" starter? Your saved sections in the library are kept.`,
+                )
+              ) {
+                onPreset(preset)
+              }
+            }}
+          >
+            <option value="" disabled>
+              Pick a starting point…
+            </option>
+            {RESUME_PRESETS.map((p) => (
+              <option key={p.id} value={p.id} title={p.blurb}>
+                {p.label} — {p.blurb}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className="cz-group">
         <span className="cz-label">Template</span>
         <div className="seg">

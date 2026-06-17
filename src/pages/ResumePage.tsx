@@ -7,7 +7,7 @@ import Footer from '../components/atoms/Footer'
 
 export default function ResumePage() {
   const { resume, insertFromLibrary, insertableBlocks } = useWorkspace()
-  const { data, setData, settings, setSettings } = resume
+  const { data, setData, settings, setSettings, applyPreset } = resume
   const previewRef = useRef<HTMLDivElement>(null)
   const [tab, setTab] = useState<'edit' | 'preview'>('edit')
 
@@ -24,7 +24,7 @@ export default function ResumePage() {
 
       <main className="layout">
         <div className={`pane left ${tab === 'edit' ? '' : 'hide-mobile'}`}>
-          <Customizer settings={settings} onChange={setSettings} />
+          <Customizer settings={settings} onChange={setSettings} onPreset={applyPreset} />
           <Editor
             data={data}
             onChange={setData}

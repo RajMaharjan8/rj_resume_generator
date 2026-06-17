@@ -10,6 +10,7 @@ import { useDragList } from '../../useDragList'
 import { ChevronIcon, GripIcon, ImageIcon, PlusIcon, TrashIcon } from '../atoms/icons'
 import { compressImage, validateImage, ACCEPT_ATTR, MAX_IMAGE_LABEL } from '../../lib/photo'
 import RichText from './RichText'
+import { suggestPhrasings, tipFor } from '../../lib/phrasing'
 
 interface Props {
   field: FieldDef
@@ -133,6 +134,12 @@ export default function FieldInput({
         <div className="field">
           {labelEl()}
           <RichText value={(value as string) ?? ''} onChange={(html) => onChange(html)} />
+          <PhrasingHelper
+            onInsert={(line) => {
+              const prev = ((value as string) ?? '').trim()
+              onChange(`${prev}<p>${line}</p>`)
+            }}
+          />
         </div>
       )
 
@@ -221,6 +228,53 @@ export default function FieldInput({
     default:
       return null
   }
+}
+
+// A small, dismissible helper under rich-text fields that offers human-sounding
+// phrasing scaffolds. It nudges users away from buzzword-formulaic bullets; the
+// suggestions are starting points to edit, not finished copy. No AI call — it's
+// a local rotation of varied openers (see lib/phrasing).
+function PhrasingHelper({ onInsert }: { onInsert: (line: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [seed, setSeed] = useState(0)
+  const suggestions = suggestPhrasings(seed)
+
+  if (!open) {
+    return (
+      <button type="button" className="link-btn phrasing-toggle" onClick={() => setOpen(true)}>
+        Need a human-sounding line?
+      </button>
+    )
+  }
+
+  return (
+    <div className="phrasing">
+      <div className="phrasing-head">
+        <span className="phrasing-tip">{tipFor(seed)}</span>
+        <div className="phrasing-actions">
+          <button type="button" className="link-btn" onClick={() => setSeed((s) => s + 1)}>
+            Shuffle
+          </button>
+          <button type="button" className="link-btn" onClick={() => setOpen(false)}>
+            Hide
+          </button>
+        </div>
+      </div>
+      <div className="phrasing-list">
+        {suggestions.map((s, i) => (
+          <button
+            key={i}
+            type="button"
+            className="phrasing-chip"
+            title="Insert this as a starting line to edit"
+            onClick={() => onInsert(s)}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function ImageBody({

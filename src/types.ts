@@ -77,7 +77,7 @@ export interface ResumeData {
   blockLibrary?: Block[]
 }
 
-export type TemplateId = 'modern' | 'classic' | 'compact'
+export type TemplateId = 'modern' | 'classic' | 'compact' | 'sidebar' | 'minimal' | 'elegant'
 
 export interface ResumeSettings {
   template: TemplateId
@@ -180,51 +180,376 @@ export function buildSample(): ResumeData {
 
   return {
     header: {
-      fullName: 'John Doe',
-      title: 'Senior Frontend Engineer',
+      fullName: 'Maya Fernandez',
+      title: 'Frontend Engineer',
       photo: '',
       contacts: [
-        { id: newId(), type: 'email', value: 'john.doe@example.com' },
-        { id: newId(), type: 'phone', value: '+1 (555) 123-4567' },
-        { id: newId(), type: 'location', value: 'San Francisco, CA' },
-        { id: newId(), type: 'website', value: 'johndoe.dev' },
-        { id: newId(), type: 'linkedin', value: 'linkedin.com/in/johndoe' },
-        { id: newId(), type: 'github', value: 'github.com/johndoe' },
+        { id: newId(), type: 'email', value: 'maya.fernandez@gmail.com' },
+        { id: newId(), type: 'phone', value: '+1 (415) 802-7741' },
+        { id: newId(), type: 'location', value: 'Oakland, CA' },
+        { id: newId(), type: 'website', value: 'mayafernandez.dev' },
+        { id: newId(), type: 'linkedin', value: 'linkedin.com/in/mayafdz' },
+        { id: newId(), type: 'github', value: 'github.com/mayafdz' },
       ],
     },
     blocks: [
-      mk('Summary', summaryField, 'Frontend engineer with 7+ years building performant, accessible web apps.'),
-      mk('Skills', skillsField, ['React', 'TypeScript', 'Next.js', 'Node.js', 'GraphQL', 'Testing']),
+      mk(
+        'Summary',
+        summaryField,
+        'Frontend engineer who likes turning messy interfaces into ones people actually enjoy using. ' +
+          "Spent the last several years on design systems and the unglamorous accessibility work that makes them hold up. Happiest pairing with designers and shipping in small steps.",
+      ),
+      mk('Skills', skillsField, ['React', 'TypeScript', 'Next.js', 'CSS', 'Node.js', 'Accessibility', 'Playwright']),
       mk('Experience', expField, [
         {
           __id: newId(),
-          [expRow[0].id]: 'Senior Frontend Engineer',
-          [expRow[1].id]: 'Acme Corp',
-          [expRow[2].id]: 'Jan 2021 – Present',
+          [expRow[0].id]: 'Frontend Engineer',
+          [expRow[1].id]: 'Ledgerline',
+          [expRow[2].id]: 'Mar 2021 – Present',
           [expRow[3].id]:
-            'Led migration to React + TypeScript, cutting load time 45%.\nBuilt a shared component library adopted by 6 teams.',
+            'Rebuilt the billing dashboard the team had been afraid to touch — it’s now the part of the app support gets the fewest tickets about.\n' +
+            'Took over our component library and got the other teams to actually adopt it by sitting with them, not by writing a mandate.\n' +
+            'Wrote the accessibility tests nobody wanted to, which quietly caught a few embarrassing bugs before customers did.',
+        },
+        {
+          __id: newId(),
+          [expRow[0].id]: 'Junior Web Developer',
+          [expRow[1].id]: 'Brightwell Studio',
+          [expRow[2].id]: '2018 – 2021',
+          [expRow[3].id]:
+            'Built marketing sites for clients ranging from a local bakery to a mid-size bank — learned to ask “why” before “how.”\n' +
+            'Was the person who finally documented our deploy process so new hires stopped pinging me at 9pm.',
         },
       ]),
       mk('Projects', projField, [
         {
           __id: newId(),
-          [projRow[0].id]: 'OpenChart',
-          [projRow[1].id]: 'github.com/johndoe/openchart',
-          [projRow[2].id]: 'Open-source charting library with 2k+ GitHub stars.',
+          [projRow[0].id]: 'Tidepool',
+          [projRow[1].id]: 'github.com/mayafdz/tidepool',
+          [projRow[2].id]:
+            'A little tide-chart app for surfers I made for my brother. People I’ve never met use it now, which is a strange and nice feeling.',
         },
       ]),
       mk('Education', eduField, [
         {
           __id: newId(),
-          [eduRow[0].id]: 'B.S. Computer Science',
-          [eduRow[1].id]: 'UC Berkeley',
+          [eduRow[0].id]: 'B.A. Cognitive Science',
+          [eduRow[1].id]: 'UC Santa Cruz',
           [eduRow[2].id]: '2014 – 2018',
-          [eduRow[3].id]: 'GPA 3.8 · Dean’s List',
+          [eduRow[3].id]: 'Minor in Computer Science. Spent more time in the HCI lab than I should admit.',
         },
       ]),
     ],
   }
 }
+
+// ---- Role-based starter presets ----
+// Each preset is a hand-written starter resume aimed at a kind of role. They
+// share buildSample's block shapes (Summary / Skills / Experience / Projects /
+// Education) so the editor treats them identically — only the content, ordering
+// and suggested visual settings differ. The voice is deliberately first-person
+// and a little informal so a freshly-started resume doesn't read as boilerplate.
+
+export interface ResumePreset {
+  id: string
+  label: string
+  blurb: string
+  settings: Partial<ResumeSettings>
+  build: () => ResumeData
+}
+
+// Spec for one starter, expanded into real blocks by buildPreset.
+interface PresetSpec {
+  fullName: string
+  title: string
+  contacts: { type: string; value: string }[]
+  summary: string
+  skills: string[]
+  experience: { role: string; company: string; period: string; highlights: string }[]
+  projects?: { name: string; link: string; description: string }[]
+  education: { degree: string; school: string; period: string; details: string }[]
+}
+
+function buildPreset(spec: PresetSpec): ResumeData {
+  const expRow = [f.text('Role', true), f.text('Company', true), f.text('Period', true), f.textarea('Highlights', true)]
+  const eduRow = [f.text('Degree', true), f.text('School', true), f.text('Period', true), f.text('Details', true)]
+  const projRow = [f.text('Name', true), f.text('Link', true), f.textarea('Description', true)]
+
+  const summaryField = f.textarea('Summary', true)
+  const skillsField = f.tags('Skills', true)
+  const expField = f.repeater('Roles', expRow, true)
+  const eduField = f.repeater('Entries', eduRow, true)
+  const projField = f.repeater('Projects', projRow, true)
+
+  const mk = (title: string, field: FieldDef, value: FieldValue): Block => ({
+    id: newId(),
+    title,
+    builtin: true,
+    fields: [field],
+    values: { [field.id]: value },
+  })
+
+  const blocks: Block[] = [
+    mk('Summary', summaryField, spec.summary),
+    mk('Skills', skillsField, spec.skills),
+    mk(
+      'Experience',
+      expField,
+      spec.experience.map((e) => ({
+        __id: newId(),
+        [expRow[0].id]: e.role,
+        [expRow[1].id]: e.company,
+        [expRow[2].id]: e.period,
+        [expRow[3].id]: e.highlights,
+      })),
+    ),
+  ]
+
+  if (spec.projects?.length) {
+    blocks.push(
+      mk(
+        'Projects',
+        projField,
+        spec.projects.map((p) => ({
+          __id: newId(),
+          [projRow[0].id]: p.name,
+          [projRow[1].id]: p.link,
+          [projRow[2].id]: p.description,
+        })),
+      ),
+    )
+  }
+
+  blocks.push(
+    mk(
+      'Education',
+      eduField,
+      spec.education.map((e) => ({
+        __id: newId(),
+        [eduRow[0].id]: e.degree,
+        [eduRow[1].id]: e.school,
+        [eduRow[2].id]: e.period,
+        [eduRow[3].id]: e.details,
+      })),
+    ),
+  )
+
+  return {
+    header: {
+      fullName: spec.fullName,
+      title: spec.title,
+      photo: '',
+      contacts: spec.contacts.map((c) => ({ id: newId(), type: c.type, value: c.value })),
+    },
+    blocks,
+  }
+}
+
+export const RESUME_PRESETS: ResumePreset[] = [
+  {
+    id: 'sample',
+    label: 'Sample',
+    blurb: 'The default starter — a realistic frontend engineer to edit over.',
+    settings: { template: 'modern', accent: '#f0532f' },
+    build: buildSample,
+  },
+  {
+    id: 'one-page-tech',
+    label: 'One-page tech',
+    blurb: 'Tight, single-page layout for engineers who want everything to fit.',
+    settings: { template: 'compact', accent: '#2563eb', fontScale: 0.95 },
+    build: () =>
+      buildPreset({
+        fullName: 'Devin Park',
+        title: 'Backend Engineer',
+        contacts: [
+          { type: 'email', value: 'devin.park@gmail.com' },
+          { type: 'phone', value: '+1 (206) 555-0182' },
+          { type: 'location', value: 'Seattle, WA' },
+          { type: 'github', value: 'github.com/devpark' },
+        ],
+        summary:
+          "Backend engineer who cares more about systems that stay up at 3am than ones that demo well. I like boring, predictable infrastructure and writing the runbook before I need it.",
+        skills: ['Go', 'PostgreSQL', 'Kafka', 'Kubernetes', 'gRPC', 'Terraform'],
+        experience: [
+          {
+            role: 'Backend Engineer',
+            company: 'Northgate Logistics',
+            period: '2020 – Present',
+            highlights:
+              'Owned the order-routing service from the messy version to the one we stopped getting paged about.\n' +
+              'Moved us off a single database before it became a Friday-night problem, and documented why so it stays that way.',
+          },
+          {
+            role: 'Software Engineer',
+            company: 'Tessellate',
+            period: '2017 – 2020',
+            highlights:
+              'Built internal tools nobody asked for but everyone ended up using.\n' +
+              'Was the person who actually read the Postgres docs when queries got slow.',
+          },
+        ],
+        education: [
+          {
+            degree: 'B.S. Computer Engineering',
+            school: 'University of Washington',
+            period: '2013 – 2017',
+            details: 'Paid my way through running the campus Linux club’s server.',
+          },
+        ],
+      }),
+  },
+  {
+    id: 'creative',
+    label: 'Creative',
+    blurb: 'Warmer, design-forward look for designers and creative roles.',
+    settings: { template: 'sidebar', accent: '#7c3aed', fontFamily: FONT_OPTIONS[2].value },
+    build: () =>
+      buildPreset({
+        fullName: 'Noor Haddad',
+        title: 'Product Designer',
+        contacts: [
+          { type: 'email', value: 'noor@noorhaddad.design' },
+          { type: 'location', value: 'Brooklyn, NY' },
+          { type: 'website', value: 'noorhaddad.design' },
+          { type: 'linkedin', value: 'linkedin.com/in/noorhaddad' },
+        ],
+        summary:
+          'Product designer who started in illustration and never quite let go of it. I sketch before I open Figma, and I think the best work happens when designers and engineers argue early and often.',
+        skills: ['Figma', 'Prototyping', 'Design systems', 'User research', 'Illustration', 'Motion'],
+        experience: [
+          {
+            role: 'Product Designer',
+            company: 'Marigold',
+            period: '2021 – Present',
+            highlights:
+              'Redesigned onboarding by actually watching people get stuck in it, not by guessing.\n' +
+              'Built and maintained the design system, mostly by making it the path of least resistance.',
+          },
+          {
+            role: 'Visual Designer',
+            company: 'Studio Kettle',
+            period: '2018 – 2021',
+            highlights:
+              'Brand and web work for small clients who trusted us with a lot.\n' +
+              'Learned that a good question saves more time than a good mockup.',
+          },
+        ],
+        projects: [
+          {
+            name: 'Slowtype',
+            link: 'slowtype.studio',
+            description: 'A small type-specimen zine I write and design on weekends. Print, on purpose.',
+          },
+        ],
+        education: [
+          {
+            degree: 'BFA Graphic Design',
+            school: 'RISD',
+            period: '2014 – 2018',
+            details: 'Thesis on wayfinding in transit systems.',
+          },
+        ],
+      }),
+  },
+  {
+    id: 'academic',
+    label: 'Academic CV',
+    blurb: 'Serif, formal layout suited to research and academic roles.',
+    settings: { template: 'elegant', accent: '#0f172a', fontFamily: FONT_OPTIONS[1].value },
+    build: () =>
+      buildPreset({
+        fullName: 'Dr. Elena Vasquez',
+        title: 'Postdoctoral Researcher, Marine Biology',
+        contacts: [
+          { type: 'email', value: 'e.vasquez@university.edu' },
+          { type: 'location', value: 'Woods Hole, MA' },
+          { type: 'website', value: 'elenavasquez.science' },
+        ],
+        summary:
+          'Marine biologist studying how coral microbiomes shift under heat stress. My fieldwork takes me from the lab bench to reef sites I’m increasingly worried about, which is rather the point.',
+        skills: ['Microbial ecology', 'Bioinformatics', 'R', 'Field sampling', 'Grant writing', 'Teaching'],
+        experience: [
+          {
+            role: 'Postdoctoral Researcher',
+            company: 'Woods Hole Oceanographic Institution',
+            period: '2022 – Present',
+            highlights:
+              'Lead a long-term study tracking coral-associated bacteria across three reef systems.\n' +
+              'Mentor two graduate students, which has taught me more about my own work than I expected.',
+          },
+          {
+            role: 'Graduate Researcher',
+            company: 'Scripps Institution of Oceanography',
+            period: '2017 – 2022',
+            highlights:
+              'Dissertation on thermal tolerance in reef-building corals.\n' +
+              'Ran three field seasons in the Coral Triangle, mostly held together by good colleagues.',
+          },
+        ],
+        education: [
+          {
+            degree: 'Ph.D. Marine Biology',
+            school: 'UC San Diego',
+            period: '2017 – 2022',
+            details: 'Dissertation: Microbial resilience in warming reef systems.',
+          },
+          {
+            degree: 'B.S. Biology',
+            school: 'University of Miami',
+            period: '2013 – 2017',
+            details: 'Graduated with honors; first generation to finish college.',
+          },
+        ],
+      }),
+  },
+  {
+    id: 'executive',
+    label: 'Executive',
+    blurb: 'Clean, confident layout for senior and leadership roles.',
+    settings: { template: 'minimal', accent: '#0f172a' },
+    build: () =>
+      buildPreset({
+        fullName: 'James Okonkwo',
+        title: 'VP of Engineering',
+        contacts: [
+          { type: 'email', value: 'james.okonkwo@gmail.com' },
+          { type: 'phone', value: '+1 (312) 555-0147' },
+          { type: 'location', value: 'Chicago, IL' },
+          { type: 'linkedin', value: 'linkedin.com/in/jamesokonkwo' },
+        ],
+        summary:
+          'Engineering leader who came up through the codebase, not around it. I’ve grown two teams from a handful of people to a few dozen, and I’ve learned that culture is mostly the decisions you make when it’s inconvenient.',
+        skills: ['Team building', 'Platform strategy', 'Hiring', 'Mentorship', 'Incident response', 'Budgeting'],
+        experience: [
+          {
+            role: 'VP of Engineering',
+            company: 'Cleargrove',
+            period: '2019 – Present',
+            highlights:
+              'Grew the org from 12 to 40 engineers without losing the things that made the first 12 want to stay.\n' +
+              'Rebuilt how we handle incidents so the focus landed on the system, not the person who pushed the button.',
+          },
+          {
+            role: 'Director of Engineering',
+            company: 'Halcyon Health',
+            period: '2014 – 2019',
+            highlights:
+              'Led the platform team through a migration that everyone said would take a year and quietly took fourteen months.\n' +
+              'Made hiring a craft on the team, not a chore handed to whoever was free.',
+          },
+        ],
+        education: [
+          {
+            degree: 'B.S. Computer Science',
+            school: 'University of Illinois',
+            period: '2006 – 2010',
+            details: '',
+          },
+        ],
+      }),
+  },
+]
 
 // A single "Default block" offered in the "Add section" picker out of the box,
 // so a user can add a ready-made section (bold title · title · date +

@@ -385,6 +385,12 @@ body {
   flex-direction: column;
   gap: 6px;
 }
+.cz-group-wide {
+  flex-basis: 100%;
+}
+.cz-group-wide .select {
+  max-width: 360px;
+}
 .cz-label {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -610,6 +616,62 @@ body {
 .link-btn svg {
   width: 14px;
   height: 14px;
+}
+
+/* Phrasing helper (under rich-text fields) */
+.phrasing-toggle {
+  font-weight: 500;
+  font-size: 12px;
+  opacity: 0.85;
+}
+.phrasing {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px dashed var(--ui-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ui-accent) 4%, transparent);
+}
+.phrasing-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.phrasing-tip {
+  font-size: 12px;
+  color: var(--ui-muted);
+  font-style: italic;
+}
+.phrasing-actions {
+  display: inline-flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.phrasing-actions .link-btn {
+  font-size: 12px;
+  padding: 0;
+}
+.phrasing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.phrasing-chip {
+  text-align: left;
+  border: 1px solid var(--ui-border);
+  background: var(--ui-panel);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  color: var(--ui-text, inherit);
+  cursor: pointer;
+  line-height: 1.4;
+  transition: border-color 0.12s, background 0.12s;
+}
+.phrasing-chip:hover {
+  border-color: var(--ui-accent);
+  background: color-mix(in srgb, var(--ui-accent) 8%, var(--ui-panel));
 }
 .icon-btn.danger {
   color: #dc2626;
@@ -1285,6 +1347,119 @@ body {
 }
 .tpl-compact .entry {
   margin-bottom: 8px;
+}
+
+/* Sidebar — accent band behind the header, generous spacing, rounded skill
+   chips. A warmer, design-forward look. */
+.tpl-sidebar {
+  line-height: 1.5;
+}
+.tpl-sidebar .r-head {
+  background: color-mix(in srgb, var(--rs-accent) 8%, white);
+  margin: -16mm -16mm 0;
+  padding: 16mm 16mm 14px;
+  border-bottom: none;
+}
+.tpl-sidebar .r-head h1 {
+  font-size: 2.2em;
+}
+.tpl-sidebar .r-title {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.tpl-sidebar .r-block {
+  margin-top: 20px;
+}
+.tpl-sidebar .r-block-title {
+  display: inline-block;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--rs-accent);
+  letter-spacing: 0.1em;
+}
+.tpl-sidebar .skill-list li {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Minimal — no accent block, hairline rules, lots of air. Reads as quiet and
+   confident; good for senior/executive resumes. */
+.tpl-minimal .r-head {
+  border-bottom: 1px solid #e2e2e2;
+  padding-bottom: 12px;
+}
+.tpl-minimal .r-title {
+  color: #444;
+  font-weight: 500;
+}
+.tpl-minimal .c-icon {
+  color: #888;
+}
+.tpl-minimal .r-block-title {
+  color: #111;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  font-size: 0.78em;
+}
+.tpl-minimal .skill-list li {
+  background: transparent;
+  color: #333;
+  padding: 0;
+  border-radius: 0;
+}
+.tpl-minimal .skill-list {
+  gap: 4px 16px;
+}
+.tpl-minimal .skill-list li:not(:last-child)::after {
+  content: '·';
+  margin-left: 16px;
+  color: #bbb;
+}
+
+/* Elegant — serif body, centred header, classic section rules. Suited to
+   academic CVs and formal documents. */
+.tpl-elegant {
+  font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  line-height: 1.5;
+}
+.tpl-elegant .r-head {
+  text-align: center;
+  border-bottom: 2px solid var(--rs-accent);
+  padding-bottom: 12px;
+}
+.tpl-elegant .r-head-main {
+  justify-content: center;
+}
+.tpl-elegant .r-head h1 {
+  font-size: 2.3em;
+  letter-spacing: 0.02em;
+}
+.tpl-elegant .r-title {
+  color: #333;
+  font-style: italic;
+  font-weight: 500;
+}
+.tpl-elegant .c-icon {
+  color: #777;
+}
+.tpl-elegant .r-block-title {
+  text-align: center;
+  color: var(--rs-accent);
+  letter-spacing: 0.16em;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 4px;
+}
+.tpl-elegant .skill-list {
+  justify-content: center;
+}
+.tpl-elegant .skill-list li {
+  background: transparent;
+  color: #333;
+  padding: 2px 0;
+}
+.tpl-elegant .skill-list li:not(:last-child)::after {
+  content: '·';
+  margin-left: 12px;
+  color: #bbb;
 }
 
 /* ---------------- Responsive ---------------- */

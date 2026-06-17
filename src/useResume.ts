@@ -9,6 +9,7 @@ import {
   SCHEMA_VERSION,
   type ResumeData,
   type ResumeDoc,
+  type ResumePreset,
   type ResumeSettings,
 } from './types'
 
@@ -125,5 +126,12 @@ export function useResume(user: User | null) {
     setSettings({ ...defaultSettings })
   }, [])
 
-  return { data, setData, settings, setSettings, saveState, saveError, reset }
+  // Swap in a role-based starter preset: replaces the resume content and applies
+  // the preset's suggested look, but keeps the user's saved block library.
+  const applyPreset = useCallback((preset: ResumePreset) => {
+    setData((prev) => ({ ...preset.build(), blockLibrary: prev.blockLibrary }))
+    setSettings({ ...defaultSettings, ...preset.settings })
+  }, [])
+
+  return { data, setData, settings, setSettings, saveState, saveError, reset, applyPreset }
 }
