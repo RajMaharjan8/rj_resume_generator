@@ -15,17 +15,121 @@ export interface FooterLink {
   url: string
 }
 
+// A "design" is a whole visual treatment: a CSS theme layered on the shared
+// portfolio styles (typography scale, hero style, card/skill shapes, section
+// rhythm). It's applied via data-design on the root and is independent of the
+// page content — switching the design restyles whatever sections exist. The
+// designs gallery also offers a matching content seed (see buildDesignSeed).
+export type DesignId =
+  | 'designer'
+  | 'minimal'
+  | 'studio'
+  | 'bold'
+  | 'editorial'
+  | 'developer'
+  | 'corporate'
+  | 'academia'
+  | 'gallery'
+
 export interface PortfolioSettings {
   accent: string
   fontFamily: string
   siteTitle: string
   theme: 'light' | 'dark'
+  design?: DesignId // visual treatment; defaults to 'designer' when unset
+  pageBg?: string // custom page/body background; overrides the theme's --bg
   contactEmail: string // used by the footer "contact" link
   // Footer customization. When unset, the footer falls back to "© <year> <title>".
   footerText?: string // left side; supports {year} and {title} placeholders
   footerLinks?: FooterLink[] // right side links (social, etc.)
   footerShowEmail?: boolean // show the contact email as a link (default true)
 }
+
+// Catalogue of designs shown in the gallery. `accent`/`font`/`theme` are the
+// look the seed ships with; the user can still override all of them after.
+export interface DesignMeta {
+  id: DesignId
+  label: string
+  blurb: string
+  accent: string
+  theme: 'light' | 'dark'
+  fontFamily: string
+}
+
+export const DESIGNS: DesignMeta[] = [
+  {
+    id: 'designer',
+    label: 'Designer',
+    blurb: 'Bold uppercase hero with a ghost watermark, accent frames and an icon services grid. The original.',
+    accent: '#f0532f',
+    theme: 'dark',
+    fontFamily: "'Space Grotesk', system-ui, sans-serif",
+  },
+  {
+    id: 'minimal',
+    label: 'Minimal',
+    blurb: 'Quiet and roomy. Light theme, restrained type, hairline rules — lets the work speak.',
+    accent: '#111827',
+    theme: 'light',
+    fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif",
+  },
+  {
+    id: 'studio',
+    label: 'Studio',
+    blurb: 'Agency feel: a project-card grid, soft panels and confident headings.',
+    accent: '#2563eb',
+    theme: 'light',
+    fontFamily: "'Space Grotesk', system-ui, sans-serif",
+  },
+  {
+    id: 'bold',
+    label: 'Bold',
+    blurb: 'Big type and an accent-filled hero. High contrast, made to be noticed.',
+    accent: '#7c3aed',
+    theme: 'dark',
+    fontFamily: "'Space Grotesk', system-ui, sans-serif",
+  },
+  {
+    id: 'editorial',
+    label: 'Editorial',
+    blurb: 'Serif, magazine-style. Centered headings and generous line height for writing-heavy folios.',
+    accent: '#b45309',
+    theme: 'light',
+    fontFamily: "Georgia, 'Times New Roman', serif",
+  },
+  {
+    id: 'developer',
+    label: 'Developer',
+    blurb: 'Terminal-flavoured dark theme with mono accents — for engineers shipping projects.',
+    accent: '#22d3ee',
+    theme: 'dark',
+    fontFamily: "'Space Grotesk', system-ui, sans-serif",
+  },
+  {
+    id: 'corporate',
+    label: 'Corporate',
+    blurb: 'Structured and trustworthy. Navy accents, a banded hero and a tidy services grid — for companies and consultancies.',
+    accent: '#1d4ed8',
+    theme: 'light',
+    fontFamily: "system-ui, 'Segoe UI', Roboto, sans-serif",
+  },
+  {
+    id: 'academia',
+    label: 'Academia',
+    blurb: 'Formal university feel: serif headings, a crest-style hero rule and clean record lists — for schools, faculty and students.',
+    accent: '#7f1d1d',
+    theme: 'light',
+    fontFamily: "Georgia, 'Times New Roman', serif",
+  },
+  {
+    id: 'gallery',
+    label: 'Gallery',
+    blurb: 'Image-first and dramatic. Edge-to-edge work grid on a near-black canvas — for studios, photographers and artists.',
+    accent: '#e11d48',
+    theme: 'dark',
+    fontFamily: "'Space Grotesk', system-ui, sans-serif",
+  },
+]
 
 export type BlockBg = 'none' | 'soft' | 'accent' | 'dark'
 export type BlockPad = 'compact' | 'normal' | 'roomy'
@@ -81,6 +185,7 @@ export const defaultPortfolioSettings: PortfolioSettings = {
   fontFamily: PORTFOLIO_FONTS[0].value,
   siteTitle: 'My Portfolio',
   theme: 'dark',
+  design: 'designer',
   contactEmail: '',
   footerText: '© {year} {title}',
   footerLinks: [],

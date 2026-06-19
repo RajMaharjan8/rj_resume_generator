@@ -2445,6 +2445,35 @@ body {
    site styling itself comes from siteStyles.ts (scoped under .cv-canvas).
    ============================================================================ */
 .cv { display: flex; flex-direction: column; min-height: 100%; }
+.cv-guest-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: color-mix(in srgb, var(--ui-accent) 10%, var(--ui-panel));
+  border: 1px solid color-mix(in srgb, var(--ui-accent) 30%, var(--ui-border));
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--ui-text);
+}
+.cv-guest-text { flex: 1; line-height: 1.45; }
+.cv-guest-signin { flex-shrink: 0; white-space: nowrap; }
+.cv-guest-x {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: var(--ui-muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.cv-guest-x:hover { color: var(--ui-text); }
+@media (max-width: 600px) {
+  .cv-guest-banner { flex-wrap: wrap; }
+  .cv-guest-text { flex-basis: 100%; }
+}
 .cv-bar {
   position: sticky; top: 0; z-index: 30;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -2491,6 +2520,11 @@ body {
 .cv-sec-settings label { display: inline-flex; flex-direction: column; gap: 4px; color: var(--ui-muted); font-weight: 600; }
 .cv-sec-settings select { padding: 5px 8px; border-radius: 8px; border: 1px solid var(--ui-border); background: var(--ui-bg); color: var(--ui-text); }
 .cv-sec-settings .cv-check { flex-direction: row; align-items: center; gap: 6px; }
+.cv-sec-settings label.is-disabled { opacity: 0.45; }
+.cv-sec-color { display: inline-flex; align-items: center; gap: 8px; }
+.cv-sec-color .color-input { width: 30px; height: 26px; padding: 0; border: 1px solid var(--ui-border); border-radius: 6px; background: none; cursor: pointer; }
+.cv-sec-color-hint { font-weight: 500; color: var(--ui-muted); font-size: 11px; }
+.cv-sec-clear { border: none; background: none; color: var(--ui-accent); font-weight: 600; font-size: 12px; cursor: pointer; padding: 0; }
 
 .cv-container { max-width: 1000px; margin: 0 auto; padding: 56px 28px; }
 .cv-section.is-full .cv-container { max-width: none; }
@@ -2514,7 +2548,7 @@ body {
 .cv-col-resize button:hover { background: var(--ui-accent); color: #fff; }
 
 /* Widget shell with its hover toolbar. */
-.cv-widget { position: relative; border-radius: 8px; padding: 8px; margin-bottom: 4px; }
+.cv-widget { position: relative; border-radius: 8px; padding: 8px; margin-bottom: 4px; min-width: 0; max-width: 100%; }
 .cv-widget:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #f0532f) 40%, transparent); }
 .cv-w-toolbar {
   position: absolute; top: -12px; right: 8px; z-index: 4;
@@ -2688,6 +2722,16 @@ body {
 .cw-img-val { font-size: 12px; color: var(--ui-muted); width: 38px; text-align: right; }
 .cw-shape-seg { flex: 1; }
 .cw-shape-seg .seg-btn { font-size: 12px; }
+.cw-image { max-width: 100%; min-width: 0; overflow: hidden; }
+/* Keep the editor preview image inside its widget/column no matter the natural
+   size. The !important + max-height defeat any inline width and guarantee the
+   image can never cover neighbouring content in the builder canvas. */
+.cw-image .pf-w-image {
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 420px;
+  position: static !important;
+}
 .cw-image.pf-align-center { text-align: center; }
 .cw-image.pf-align-center .pf-w-image { margin-left: auto; margin-right: auto; }
 .cw-image.pf-align-right { text-align: right; }
@@ -2767,5 +2811,45 @@ body {
 .cv-modal-body code { background: var(--ui-card); padding: 1px 5px; border-radius: 5px; font-size: 12px; }
 .cv-modal-foot { padding: 14px 20px; border-top: 1px solid var(--ui-border); display: flex; justify-content: flex-end; }
 .cv-foot-links { display: flex; flex-direction: column; gap: 8px; }
+
+/* Designs gallery */
+.cv-design-modal { width: min(880px, calc(100vw - 32px)); }
+.cv-design-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+@media (max-width: 720px) { .cv-design-grid { grid-template-columns: 1fr; } }
+.cv-design-card {
+  border: 1px solid var(--ui-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--ui-panel);
+  display: flex;
+  flex-direction: column;
+}
+.cv-design-card.is-active { border-color: var(--ui-accent); box-shadow: 0 0 0 1px var(--ui-accent); }
+.cv-design-thumb {
+  height: 150px;
+  overflow: hidden;
+  position: relative;
+  border-bottom: 1px solid var(--ui-border);
+  /* The scoped siteCss sets background via --bg on this element. */
+  background: var(--bg);
+  color: var(--text);
+}
+.cv-design-thumb .pf-hero { min-height: 100%; display: flex; align-items: center; }
+.cv-design-thumb .dt-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; }
+.cv-design-thumb .dt-eyebrow { font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
+.cv-design-thumb .dt-name { font-size: 26px !important; line-height: 1 !important; margin: 0 !important; }
+.cv-design-thumb .dt-btn { align-self: flex-start; margin: 4px 0 2px !important; padding: 5px 12px !important; font-size: 10px !important; }
+.cv-design-thumb .dt-sec { font-size: 9px !important; margin: 4px 0 0 !important; }
+.cv-design-thumb .dt-cards { display: flex; gap: 8px; }
+.cv-design-thumb .dt-cards i { display: block; width: 46px; height: 26px; border-radius: 8px; background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow); }
+.cv-design-meta { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.cv-design-name { font-weight: 700; font-size: 15px; }
+.cv-design-name em { color: var(--ui-accent); font-style: normal; font-weight: 500; font-size: 13px; }
+.cv-design-blurb { margin: 0; font-size: 12.5px; color: var(--ui-muted); line-height: 1.45; flex: 1; }
+.cv-design-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 .cv-foot-link-row { display: flex; align-items: center; gap: 6px; }
 .cv-foot-link-row .input { flex: 1; }

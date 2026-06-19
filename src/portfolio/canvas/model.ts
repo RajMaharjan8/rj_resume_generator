@@ -76,6 +76,9 @@ export interface Widget {
   // image display
   rounded?: boolean // legacy; superseded by `shape`
   shape?: 'square' | 'rounded' | 'circle'
+  // How the image fills its frame. 'cover' crops to fill (default for circle/
+  // fixed shapes); 'contain' shows the whole image as-is without cropping.
+  fit?: 'cover' | 'contain'
   width?: number // image width as a percentage of its column (10–100)
   size?: number // spacer height also reuses `height`
   align?: 'left' | 'center' | 'right'
@@ -105,6 +108,9 @@ export interface Section {
   // Legacy: older saves stored a single `columns` array directly on the section.
   columns?: Column[]
   bg?: SectionBg
+  // Custom section background. When set, it overrides the `bg` preset above with
+  // an exact colour. Text colour auto-flips to stay readable (see renderer).
+  bgColor?: string
   pad?: SectionPad
   full?: boolean // full-bleed (no max-width container)
   hideInNav?: boolean // when true, this section is not shown as a nav link

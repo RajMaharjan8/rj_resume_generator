@@ -99,11 +99,12 @@ export default function WidgetEditor({ widget: w, onChange }: Props) {
     case 'image': {
       const shape = w.shape ?? (w.rounded ? 'rounded' : 'square')
       const width = w.width ?? 100
+      const fit = w.fit ?? 'cover'
       return (
         <div className={`cw-image pf-align-${w.align ?? 'left'}`}>
           {w.src ? (
             <img
-              className={`pf-w-image shape-${shape}`}
+              className={`pf-w-image shape-${shape}${fit === 'contain' ? ' fit-contain' : ''}`}
               style={{ width: `${width}%` }}
               src={w.src}
               alt={w.alt ?? ''}
@@ -132,6 +133,27 @@ export default function WidgetEditor({ widget: w, onChange }: Props) {
                       {sh === 'square' ? 'Square' : sh === 'rounded' ? 'Rounded' : 'Circle'}
                     </button>
                   ))}
+                </div>
+              </div>
+              <div className="cw-img-row">
+                <span className="cw-img-lbl">Fit</span>
+                <div className="seg sm cw-shape-seg">
+                  <button
+                    type="button"
+                    className={`seg-btn ${fit === 'cover' ? 'active' : ''}`}
+                    title="Crop the image to fill its frame"
+                    onClick={() => set({ fit: 'cover' })}
+                  >
+                    Crop to fill
+                  </button>
+                  <button
+                    type="button"
+                    className={`seg-btn ${fit === 'contain' ? 'active' : ''}`}
+                    title="Show the whole image without cropping"
+                    onClick={() => set({ fit: 'contain' })}
+                  >
+                    Show full
+                  </button>
                 </div>
               </div>
               <div className="cw-img-row">

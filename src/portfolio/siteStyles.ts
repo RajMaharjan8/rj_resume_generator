@@ -1,10 +1,43 @@
 import type { PortfolioData } from './types'
 
+// Pick a readable text colour (near-black or near-white) for a given background.
+// Parses #rgb / #rrggbb / rgb(); for anything else (named, hsl, gradients) we
+// can't measure luminance, so we return null and let the theme's --text stand.
+export function readableOn(bg: string): string | null {
+  const c = bg.trim()
+  let r: number, g: number, b: number
+  const hex = c.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)
+  if (hex) {
+    let h = hex[1]
+    if (h.length === 3) h = h.split('').map((x) => x + x).join('')
+    r = parseInt(h.slice(0, 2), 16)
+    g = parseInt(h.slice(2, 4), 16)
+    b = parseInt(h.slice(4, 6), 16)
+  } else {
+    const rgb = c.match(/^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i)
+    if (!rgb) return null
+    r = +rgb[1]
+    g = +rgb[2]
+    b = +rgb[3]
+  }
+  // Perceived luminance (sRGB weights). High → dark text, low → light text.
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return lum > 0.6 ? '#16181e' : '#f3f4f8'
+}
+
 // The portfolio site CSS, shared by the live preview and the exported style.css.
 // `scope` lets the preview scope rules under .pf-preview without affecting the app.
 export function siteCss(data: PortfolioData, scope = ''): string {
   const s = scope ? `${scope} ` : ''
   const root = scope || ':root'
+  // Custom page background overrides the theme's --bg, and flips --text so body
+  // copy stays readable on it.
+  const pageBg = (data.settings.pageBg ?? '').trim()
+  const pageBgCss = pageBg
+    ? `${root}, ${scope ? `${scope}[data-theme="dark"]` : `${root}[data-theme="dark"]`} { --bg: ${pageBg};${
+        readableOn(pageBg) ? ` --text: ${readableOn(pageBg)};` : ''
+      } }\n`
+    : ''
   return `${root} {
   --accent: ${data.settings.accent};
   --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
@@ -77,7 +110,7 @@ ${s}.pf-rich { color: var(--muted); font-size: 16px; }
 
 /* Skill bars */
 ${s}.pf-skills { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 36px; }
-${s}.pf-skill-head { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+${s}.pf-skill-head { display: flex; justify-content: space-between; font-size: 14px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
 ${s}.pf-skill-track { height: 7px; border-radius: 999px; background: var(--border); overflow: hidden; }
 ${s}.pf-skill-fill { height: 100%; border-radius: 999px; background: var(--accent); }
 @media (max-width: 760px) { ${s}.pf-skills { grid-template-columns: 1fr; } }
@@ -200,10 +233,14 @@ ${s}h2.pf-w-heading { font-size: clamp(28px, 4vw, 38px); }
 ${s}h3.pf-w-heading { font-size: 20px; margin-bottom: 10px; }
 ${s}.pf-w-text { color: var(--muted); font-size: 16px; margin: 0 0 14px; }
 ${s}.pf-w-text p { margin: 0 0 10px; }
-${s}.pf-w-image { display: block; max-width: 100%; box-shadow: var(--shadow); }
+${s}.pf-w-image { display: block; max-width: 100%; height: auto; box-shadow: var(--shadow); }
 ${s}.pf-w-image.shape-square { border-radius: 4px; }
 ${s}.pf-w-image.shape-rounded { border-radius: 18px; }
 ${s}.pf-w-image.shape-circle { border-radius: 50%; aspect-ratio: 1 / 1; object-fit: cover; }
+/* "Show full": display the whole image as-is, no crop. Drops the forced square
+   crop on circles too (so a wide image isn't sliced into a disc). */
+${s}.pf-w-image.fit-contain { aspect-ratio: auto; object-fit: contain; }
+${s}.pf-w-image.shape-circle.fit-contain { border-radius: 12px; }
 ${s}.pf-w-image-wrap { display: block; }
 ${s}.pf-w-image-wrap.pf-align-center { text-align: center; }
 ${s}.pf-w-image-wrap.pf-align-center .pf-w-image { margin-left: auto; margin-right: auto; }
@@ -227,5 +264,137 @@ ${s}.pf-contact-block .pf-contact-cols { color: inherit; }
 @media (max-width: 760px) {
   ${s}.pf-row { grid-template-columns: 1fr; gap: 28px; }
   ${s}.pf-col { grid-column: 1 / -1 !important; }
-}`
+}
+${designCss(scope)}
+${pageBgCss}`
+}
+
+// Per-design visual overrides, layered on top of the shared styles above. Each
+// block is gated on [data-design="…"] which lives on the same element as
+// [data-theme] (the export root, or .cv-canvas / .pf-preview in the app), so the
+// selectors mirror how the theme rules are scoped. Only properties that differ
+// from the base are set — everything else falls through to the shared CSS.
+function designCss(scope: string): string {
+  // Root-level token overrides (for var() values). For the export these go on
+  // :root[data-design]; in-app they go on the scope element itself.
+  const at = (id: string) =>
+    scope ? `${scope}[data-design="${id}"]` : `:root[data-design="${id}"]`
+  // Root-level override gated on a specific theme — use this for any token that
+  // assumes light/dark (e.g. a dark panel colour), so a design that ships dark
+  // doesn't paint dark panels under a light theme (and vice-versa). Without this
+  // gate, a dark --soft under a light theme yields dark text on a dark panel.
+  const atTheme = (id: string, theme: 'light' | 'dark') => {
+    const base = scope ? scope : ':root'
+    return `${base}[data-theme="${theme}"][data-design="${id}"]`
+  }
+  // Descendant rule prefix for a given design.
+  const on = (id: string) => (scope ? `${scope}[data-design="${id}"] ` : `[data-design="${id}"] `)
+
+  return `
+/* ===================== Designs ===================== */
+
+/* —— Minimal: quiet, roomy, hairline rules, no chrome —— */
+${at('minimal')} { --shadow: 0 1px 0 var(--border); }
+${on('minimal')}.pf-w-heading, ${on('minimal')}.pf-heading { letter-spacing: -0.01em; }
+${on('minimal')}h1.pf-w-heading { text-transform: none; font-weight: 600; }
+${on('minimal')}.pf-hero { background: none; }
+${on('minimal')}.pf-hero-mark { display: none; }
+${on('minimal')}.pf-card { box-shadow: none; border-radius: 8px; }
+${on('minimal')}.pf-card:hover { transform: none; box-shadow: 0 6px 20px rgba(20,22,28,0.08); }
+${on('minimal')}.pf-btn { background: none; color: var(--accent) !important; border: 1px solid var(--accent); box-shadow: none; }
+${on('minimal')}.pf-btn:hover { background: var(--accent); color: #fff !important; transform: none; }
+${on('minimal')}.pf-tags li { background: none; border: 1px solid var(--border); color: var(--text); }
+${on('minimal')}.pf-skill-fill { background: var(--text); }
+${on('minimal')}.pf-section { padding: 84px 0; }
+
+/* —— Studio: agency cards, soft panels, strong section titles —— */
+${on('studio')}.pf-section-title, ${on('studio')}.pf-heading { font-size: 30px; text-transform: none; letter-spacing: -0.01em; color: var(--text); }
+${on('studio')}.pf-heading { text-align: left; }
+${on('studio')}.pf-card { border-radius: 18px; box-shadow: 0 14px 36px rgba(20,22,28,0.10); }
+${on('studio')}.pf-w-image, ${on('studio')}.pf-pf-item { border-radius: 16px; }
+${on('studio')}.pf-svc-icon { border-radius: 16px; width: 60px; height: 60px; }
+${on('studio')}.pf-hero-mark { opacity: 0.04; }
+${on('studio')}.pf-btn { border-radius: 12px; }
+
+/* —— Bold: oversized type, accent-flooded hero, high contrast —— */
+${on('bold')}h1.pf-w-heading, ${on('bold')}.pf-hero-name { font-size: clamp(52px, 11vw, 120px); line-height: 0.92; letter-spacing: -0.03em; }
+${on('bold')}.pf-hero { background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #000)); }
+${on('bold')}.pf-hero *, ${on('bold')}.pf-hero .pf-dot { color: #fff !important; }
+${on('bold')}.pf-hero-mark { color: #fff; opacity: 0.12; }
+${on('bold')}.pf-section-title, ${on('bold')}.pf-heading { font-size: 13px; }
+${on('bold')}.pf-btn { border-radius: 4px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; }
+${on('bold')}.pf-card { border-radius: 4px; }
+${on('bold')}.pf-svc-icon { border-radius: 4px; }
+
+/* —— Editorial: serif, centered, magazine rhythm —— */
+${at('editorial')} { --font: Georgia, 'Times New Roman', serif; }
+${on('editorial')}.pf-w-text, ${on('editorial')}.pf-rich, ${on('editorial')}.pf-hero-intro { font-size: 18px; line-height: 1.8; }
+${on('editorial')}.pf-section-title, ${on('editorial')}.pf-heading { text-align: center; text-transform: uppercase; letter-spacing: 0.18em; font-size: 13px; font-weight: 600; }
+${on('editorial')}h1.pf-w-heading, ${on('editorial')}.pf-hero-name { text-transform: none; font-weight: 700; letter-spacing: -0.01em; }
+${on('editorial')}.pf-hero { text-align: center; }
+${on('editorial')}.pf-hero-inner { align-items: center; }
+${on('editorial')}.pf-hero-mark { display: none; }
+${on('editorial')}.pf-card { box-shadow: none; border: 1px solid var(--border); border-radius: 2px; }
+${on('editorial')}.pf-btn { border-radius: 2px; background: var(--text); }
+${on('editorial')}.pf-tags li { border-radius: 2px; }
+
+/* —— Developer: terminal-flavoured, mono accents, tagged headings —— */
+/* Dark-panel tokens only under the dark theme, so a light-theme developer page
+   keeps readable (light) panels instead of dark-on-dark text. */
+${atTheme('developer', 'dark')} { --soft: #11161c; }
+${on('developer')}.pf-section-title, ${on('developer')}.pf-heading { font-family: ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, monospace; text-transform: none; letter-spacing: 0; color: var(--text); }
+${on('developer')}.pf-section-title::before, ${on('developer')}.pf-heading::before { content: '// '; color: var(--accent); }
+${on('developer')}.pf-heading { text-align: left; }
+${on('developer')}.pf-hero-name, ${on('developer')}h1.pf-w-heading { font-family: ui-monospace, 'JetBrains Mono', SFMono-Regular, Menlo, monospace; text-transform: none; letter-spacing: -0.02em; }
+${on('developer')}.pf-hero-mark { font-family: ui-monospace, monospace; }
+${on('developer')}.pf-card { border-radius: 8px; border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); box-shadow: none; }
+${on('developer')}.pf-card:hover { box-shadow: 0 0 0 1px var(--accent); transform: none; }
+${on('developer')}.pf-tags li, ${on('developer')}.pf-svc-icon { font-family: ui-monospace, monospace; border-radius: 6px; }
+${on('developer')}.pf-btn { border-radius: 6px; font-family: ui-monospace, monospace; box-shadow: none; }
+${on('developer')}.pf-skill-track { background: color-mix(in srgb, var(--text) 14%, var(--bg)); }
+/* Skill labels/percentages always track the body text colour for contrast. */
+${on('developer')}.pf-skill-head { color: var(--text); }
+
+/* —— Corporate: structured, banded hero, trustworthy —— */
+${on('corporate')}.pf-hero { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, var(--bg)), var(--bg)); text-align: left; border-bottom: 3px solid var(--accent); }
+${on('corporate')}.pf-hero-inner { align-items: flex-start; }
+${on('corporate')}.pf-hero-name, ${on('corporate')}h1.pf-w-heading { text-transform: none; font-weight: 700; letter-spacing: -0.01em; font-size: clamp(36px, 6vw, 58px); }
+${on('corporate')}.pf-hero-mark { display: none; }
+${on('corporate')}.pf-section-title, ${on('corporate')}.pf-heading { text-transform: uppercase; letter-spacing: 0.1em; font-size: 13px; color: var(--accent); text-align: left; padding-left: 12px; border-left: 3px solid var(--accent); }
+${on('corporate')}.pf-heading { margin-bottom: 28px; }
+${on('corporate')}.pf-card { border-radius: 8px; box-shadow: 0 6px 18px rgba(20,22,28,0.06); border-top: 3px solid var(--accent); }
+${on('corporate')}.pf-svc-icon { border-radius: 8px; background: var(--accent); color: #fff; }
+${on('corporate')}.pf-btn { border-radius: 6px; box-shadow: none; }
+${on('corporate')}.pf-tags li { border-radius: 6px; }
+
+/* —— Academia: formal, serif, ruled headings, record lists —— */
+${at('academia')} { --font: Georgia, 'Times New Roman', serif; }
+${on('academia')}.pf-hero { text-align: center; border-bottom: 2px solid var(--text); padding-bottom: 48px; }
+${on('academia')}.pf-hero-inner { align-items: center; }
+${on('academia')}.pf-hero-mark { display: none; }
+${on('academia')}.pf-hero-name, ${on('academia')}h1.pf-w-heading { text-transform: none; font-weight: 700; letter-spacing: 0.01em; }
+${on('academia')}.pf-hero-eyebrow { font-variant: small-caps; letter-spacing: 0.1em; }
+${on('academia')}.pf-section-title, ${on('academia')}.pf-heading { text-align: center; font-family: var(--font); text-transform: none; letter-spacing: 0.02em; font-size: 26px; color: var(--text); font-weight: 700; }
+${on('academia')}.pf-heading::after { content: ''; display: block; width: 56px; height: 2px; background: var(--accent); margin: 12px auto 0; }
+${on('academia')}.pf-card { box-shadow: none; border: 1px solid var(--border); border-radius: 2px; }
+${on('academia')}.pf-btn { border-radius: 2px; background: var(--accent); box-shadow: none; }
+${on('academia')}.pf-tags li { background: none; border: 1px solid var(--accent); color: var(--accent); border-radius: 2px; }
+${on('academia')}.pf-skill-fill { background: var(--accent); }
+
+/* —— Gallery: image-first, edge-to-edge work grid, dramatic dark canvas —— */
+${atTheme('gallery', 'dark')} { --soft: #050505; --bg: #0a0a0a; --border: #1d1d1d; --card: #121212; }
+${on('gallery')}.pf-hero { text-align: center; }
+${on('gallery')}.pf-hero-inner { align-items: center; }
+${on('gallery')}.pf-hero-name, ${on('gallery')}h1.pf-w-heading { font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: clamp(44px, 9vw, 96px); }
+${on('gallery')}.pf-hero-mark { opacity: 0.07; }
+${on('gallery')}.pf-section-title, ${on('gallery')}.pf-heading { text-align: center; text-transform: uppercase; letter-spacing: 0.22em; font-size: 12px; color: var(--muted); }
+${on('gallery')}.pf-pf-grid { gap: 4px; grid-template-columns: repeat(3, 1fr); }
+${on('gallery')}.pf-pf-item { border: none; border-radius: 0; }
+${on('gallery')}.pf-pf-item figcaption { background: rgba(0,0,0,0.5); }
+${on('gallery')}.pf-pf-item img { transition: transform 0.5s ease, filter 0.5s ease; filter: grayscale(0.2); }
+${on('gallery')}.pf-pf-item:hover img { transform: scale(1.05); filter: grayscale(0); }
+${on('gallery')}.pf-w-image, ${on('gallery')}.pf-g-item { border-radius: 0; }
+${on('gallery')}.pf-btn { border-radius: 0; text-transform: uppercase; letter-spacing: 0.08em; box-shadow: none; }
+${on('gallery')}.pf-card { border-radius: 0; box-shadow: none; }
+`
 }

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx eslint *)",
+      "Bash(git rm *)",
+      "Bash(node -e \"console.log\\('grid w/ min-width:0 + max-width:100% on img => img bounded to column. No overflow possible in standard grid.'\\)\")",
+      "Bash(pkill -f vite)",
+      "Bash(node -e \"try{require.resolve\\('playwright'\\);console.log\\('playwright avail'\\)}catch{console.log\\('no playwright'\\)}\")"
+    ]
+  }
+}

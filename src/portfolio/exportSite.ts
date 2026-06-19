@@ -15,13 +15,13 @@ function escapeAttr(s: string): string {
 
 function buildHtml(data: PortfolioData): string {
   return `<!doctype html>
-<html lang="en" data-theme="${data.settings.theme}">
+<html lang="en" data-theme="${data.settings.theme}" data-design="${data.settings.design ?? 'designer'}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${escapeAttr(data.settings.siteTitle)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>

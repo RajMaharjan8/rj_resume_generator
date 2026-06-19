@@ -1,6 +1,7 @@
 // Renders a PageData document to HTML. Shared by the live canvas preview-feel
 // styling and the exported index.html so they match exactly.
 import type { PortfolioData } from '../types'
+import { readableOn } from '../siteStyles'
 import { sectionRows, type Column, type PageData, type Row, type Section, type Widget } from './model'
 
 const esc = (s: string) =>
@@ -52,8 +53,10 @@ function widgetHtml(w: Widget): string {
       if (!w.src) return ''
       const shape = w.shape ?? (w.rounded ? 'rounded' : 'square')
       const width = Math.min(100, Math.max(10, w.width ?? 100))
+      // 'contain' shows the whole image as-is; default keeps the cover crop.
+      const fitCls = w.fit === 'contain' ? ' fit-contain' : ''
       const wrapCls = `pf-w-image-wrap${alignCls}`
-      return `<div class="${wrapCls}"><img class="pf-w-image shape-${shape}" style="width:${width}%" src="${escAttr(
+      return `<div class="${wrapCls}"><img class="pf-w-image shape-${shape}${fitCls}" style="width:${width}%" src="${escAttr(
         w.src,
       )}" alt="${escAttr(w.alt ?? '')}" /></div>`
     }
@@ -163,17 +166,35 @@ function rowHtml(row: Row): string {
   return `<div class="${cls}">${row.columns.map(columnHtml).join('')}</div>`
 }
 
+// Inline style for a section's custom background. We set --bg/--soft/--card too
+// so descendant tokens (cards, skill tracks) sit on the chosen colour, and flip
+// --text/--muted for readability. A custom colour wins over the bg-* preset.
+function sectionBgStyle(color: string): string {
+  const c = color.trim()
+  const text = readableOn(c)
+  const parts = [`background:${c}`, `--bg:${c}`, `--soft:${c}`, `--card:${c}`]
+  if (text) {
+    parts.push(`color:${text}`, `--text:${text}`)
+    parts.push(`--muted:color-mix(in srgb, ${text} 60%, ${c})`)
+    parts.push(`--border:color-mix(in srgb, ${text} 18%, ${c})`)
+  }
+  return parts.join(';')
+}
+
 function sectionHtml(sec: Section): string {
+  const customBg = (sec.bgColor ?? '').trim()
   const cls = [
     'pf-section',
     'pf-reveal',
-    `bg-${sec.bg ?? 'none'}`,
+    // A custom colour replaces the preset, so drop bg-* when bgColor is set.
+    customBg ? 'bg-custom' : `bg-${sec.bg ?? 'none'}`,
     `pad-${sec.pad ?? 'normal'}`,
     sec.full ? 'is-full' : '',
   ]
     .filter(Boolean)
     .join(' ')
-  return `<section class="${cls}" id="${slug(sec.name)}">
+  const style = customBg ? ` style="${sectionBgStyle(customBg)}"` : ''
+  return `<section class="${cls}"${style} id="${slug(sec.name)}">
   <div class="pf-container">${sectionRows(sec).map(rowHtml).join('')}</div>
 </section>`
 }
